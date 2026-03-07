@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Prompt &amp; Theater — The Stage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --blood:        #8b0000;
+            --blood-bright: #c0392b;
+            --bone:         #9e9e8a;
+            --gold-dim:     #7a6a3a;
+            --panel-bg:     rgba(12,4,4,0.92);
+            --border-dim:   rgba(139,0,0,0.3);
+        }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Cinzel', serif;
+            color: var(--bone);
+            cursor: crosshair;
+        }
+
+        /* ── GRAIN ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 128px 128px;
+            opacity: 0.35;
+            mix-blend-mode: overlay;
+        }
+
+        /* ── VIGNETTE ── */
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: radial-gradient(
+                ellipse at center,
+                transparent 45%,
+                rgba(0,0,0,0.5) 75%,
+                rgba(0,0,0,0.92) 100%
+            );
+        }
+
+        /* ── STAGE CANVAS ── */
+        #stage {
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+        }
+
+        /* ── HUD ── */
+        .hud {
+            position: fixed;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .hud-top {
+            top: 0; left: 0; right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+        }
+
+        .hud-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(0.7rem, 1.5vw, 1rem);
+            letter-spacing: 0.3em;
+            color: var(--bone);
+            text-shadow: 0 0 20px rgba(139,0,0,0.5);
+        }
+
+        .hud-scene-title {
+            font-size: 0.6rem;
+            letter-spacing: 0.4em;
+            color: var(--gold-dim);
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .hud-event {
+            font-size: 0.55rem;
+            letter-spacing: 0.3em;
+            color: var(--blood-bright);
+            text-align: right;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            text-transform: uppercase;
+        }
+
+        .hud-event.visible { opacity: 1; }
+
+        /* ── PROGRESS BAR ── */
+        .progress-wrap {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 20;
+            padding: 0 28px 22px;
+            background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+            pointer-events: none;
+        }
+
+        .progress-label {
+            font-size: 0.55rem;
+            letter-spacing: 0.35em;
+            color: var(--gold-dim);
+            margin-bottom: 8px;
+            opacity: 0.7;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 2px;
+            background: rgba(139,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(
+                to right,
+                var(--blood),
+                var(--blood-bright)
+            );
+            box-shadow: 0 0 8px rgba(192,57,43,0.6);
+            transition: width 0.1s linear;
+        }
+
+        /* ── CONTROLS ── */
+        .controls {
+            position: fixed;
+            bottom: 44px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 21;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            pointer-events: all;
+        }
+
+        .ctrl-btn {
+            padding: 9px 24px;
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--bone);
+            font-family: 'Cinzel', serif;
+            font-size: 0.58rem;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .ctrl-btn:hover {
+            border-color: var(--blood-bright);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(139,0,0,0.3);
+        }
+
+        /* ── LOADING SCREEN ── */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            transition: opacity 0.8s ease;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(1rem, 3vw, 1.8rem);
+            letter-spacing: 0.3em;
+            color: var(--bone);
+            text-shadow: 0 0 30px rgba(139,0,0,0.5);
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50%       { opacity: 1;   }
+        }
+
+        .loading-bar-track {
+            width: min(300px, 60vw);
+            height: 1px;
+            background: rgba(139,0,0,0.2);
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--blood-bright);
+            box-shadow: 0 0 10px rgba(192,57,43,0.7);
+            transition: width 0.3s ease;
+        }
+
+        .loading-sub {
+            font-size: 0.58rem;
+            letter-spacing: 0.4em;
+            color: var(--gold-dim);
+            opacity: 0.6;
+            text-transform: uppercase;
+        }
+
+        /* ── EVENT CAPTIONS ── */
+        .caption {
+            position: fixed;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            color: var(--bone);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+            pointer-events: none;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .caption.show { opacity: 0.7; }
+
+        /* ── CURTAIN ── */
+        .curtain {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            background: #000;
+            transform-origin: top;
+            transform: scaleY(1);
+            transition: transform 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        .curtain.open { transform: scaleY(0); }
+    </style>
+</head>
+<body>
+
+<!-- Curtain wipe -->
+<div class="curtain" id="curtain"></div>
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loadingScreen">
+    <div class="loading-title">Raising The Curtain</div>
+    <div class="loading-bar-track">
+        <div class="loading-bar-fill" id="loadingBar"></div>
+    </div>
+    <div class="loading-sub">Preparing The Stage</div>
+</div>
+
+<!-- Stage canvas -->
+<canvas id="stage"></canvas>
+
+<!-- Overlays -->
+<div class="vignette"></div>
+
+<!-- HUD -->
+<div class="hud hud-top">
+    <div class="hud-title">Prompt &amp; Theater</div>
+    <div class="hud-scene-title" id="hudSceneTitle"></div>
+    <div class="hud-event" id="hudEvent"></div>
+</div>
+
+<!-- Caption -->
+<div class="caption" id="caption"></div>
+
+<!-- Progress -->
+<div class="progress-wrap">
+    <div class="progress-label">
+        <span id="progressEvent">—</span>
+        <span id="progressTime">0:00</span>
+    </div>
+    <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+    <a href="/api/tickets/" class="ctrl-btn">← Tickets</a>
+    <button class="ctrl-btn" onclick="replayScene()">Replay</button>
+    <a href="/" class="ctrl-btn">Gate →</a>
+</div>
+
+<script>
+// ============================================================
+// PROMPT & THEATER — Theater Engine
+// Stick figure animation driven by sequence data
+// ============================================================
+
+const canvas = document.getElementById('stage');
+const ctx    = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+// ============================================================
+// FIGURE CLASS
+// A fully articulated stick figure with bone transforms
+// ============================================================
+
+class StickFigure {
+    constructor(x, y, scale, color) {
+        this.x          = x;
+        this.y          = y;
+        this.scale      = scale || 1;
+        this.color      = color || '#c8c8b0';
+        this.facing     = 1;   // 1 = right, -1 = left
+
+        // Bone angles (radians from rest)
+        this.bones = {
+            headAngle:      0,
+            torsoAngle:     0,
+            leftArmAngle:   0.3,
+            rightArmAngle: -0.3,
+            leftForeAngle:  0.2,
+            rightForeAngle:-0.2,
+            leftLegAngle:   0.1,
+            rightLegAngle: -0.1,
+            leftShinAngle:  0.1,
+            rightShinAngle:-0.1,
+        };
+
+        // Target angles for interpolation
+        this.targets = { ...this.bones };
+
+        // Emotion indicator
+        this.emotion    = 'neutral';
+
+        // Whole-body offsets
+        this.offsetY    = 0;
+        this.targetOffY = 0;
+        this.velY       = 0;
+
+        // Walk/run cycle phase
+        this.walkPhase  = 0;
+
+        // Alpha
+        this.alpha      = 1;
+
+        // Active behavior flags
+        this.behaviors  = {};
+
+        // Props visible
+        this.props      = [];
+    }
+
+    // Smooth lerp toward targets
+    update(dt) {
+        const speed = 0.12;
+        for (const key in this.bones) {
+            this.bones[key] += (this.targets[key] - this.bones[key]) * speed;
+        }
+        this.offsetY += (this.targetOffY - this.offsetY) * 0.15;
+    }
+
+    // ── DRAW ──
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.translate(this.x, this.y + this.offsetY);
+        ctx.scale(this.facing, 1);
+
+        const s  = this.scale;
+        const lw = s * 2.5;
+
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth   = lw;
+        ctx.lineCap     = 'round';
+        ctx.lineJoin    = 'round';
+
+        // ── HEAD ──
+        ctx.save();
+        ctx.rotate(this.bones.headAngle);
+        ctx.beginPath();
+        ctx.arc(0, -s * 32, s * 6, 0, Math.PI * 2);
+        ctx.stroke();
+        this._drawEmotion(ctx, s);
+        ctx.restore();
+
+        // ── TORSO ──
+        ctx.save();
+        ctx.rotate(this.bones.torsoAngle);
+
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 26);
+        ctx.lineTo(0, -s * 8);
+        ctx.stroke();
+
+        // ── RIGHT ARM ──
+        ctx.save();
+        ctx.translate(0, -s * 22);
+        ctx.rotate(this.bones.rightArmAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(s * 11, 0);
+        ctx.stroke();
+        ctx.translate(s * 11, 0);
+        ctx.rotate(this.bones.rightForeAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(s * 9, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        // ── LEFT ARM ──
+        ctx.save();
+        ctx.translate(0, -s * 22);
+        ctx.rotate(this.bones.leftArmAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-s * 11, 0);
+        ctx.stroke();
+        ctx.translate(-s * 11, 0);
+        ctx.rotate(this.bones.leftForeAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-s * 9, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        // ── HIPS ──
+        ctx.beginPath();
+        ctx.moveTo(-s * 5, -s * 8);
+        ctx.lineTo(s * 5, -s * 8);
+        ctx.stroke();
+
+        // ── RIGHT LEG ──
+        ctx.save();
+        ctx.translate(s * 5, -s * 8);
+        ctx.rotate(this.bones.rightLegAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, s * 14);
+        ctx.stroke();
+        ctx.translate(0, s * 14);
+        ctx.rotate(this.bones.rightShinAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, s * 12);
+        ctx.stroke();
+        // Foot
+        ctx.beginPath();
+        ctx.moveTo(0, s * 12);
+        ctx.lineTo(s * 5, s * 12);
+        ctx.stroke();
+        ctx.restore();
+
+        // ── LEFT LEG ──
+        ctx.save();
+        ctx.translate(-s * 5, -s * 8);
+        ctx.rotate(this.bones.leftLegAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, s * 14);
+        ctx.stroke();
+        ctx.translate(0, s * 14);
+        ctx.rotate(this.bones.leftShinAngle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, s * 12);
+        ctx.stroke();
+        // Foot
+        ctx.beginPath();
+        ctx.moveTo(0, s * 12);
+        ctx.lineTo(-s * 5, s * 12);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.restore(); // torso
+        ctx.restore(); // figure
+    }
+
+    // ── EMOTION FACE ──
+    _drawEmotion(ctx, s) {
+        ctx.save();
+        ctx.translate(0, -s * 32);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth   = s * 1;
+
+        switch(this.emotion) {
+            case 'happy':
+                ctx.beginPath();
+                ctx.arc(0, s * 1.5, s * 2.5, 0, Math.PI);
+                ctx.stroke();
+                break;
+            case 'sad':
+                ctx.beginPath();
+                ctx.arc(0, s * 3.5, s * 2.5, Math.PI, 0);
+                ctx.stroke();
+                break;
+            case 'scared':
+                ctx.beginPath();
+                ctx.arc(0, s * 2, s * 1.8, 0, Math.PI * 2);
+                ctx.stroke();
+                break;
+            case 'angry':
+                ctx.beginPath();
+                ctx.moveTo(-s * 3, -s * 1);
+                ctx.lineTo(-s * 1, -s * 0.2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(s * 3, -s * 1);
+                ctx.lineTo(s * 1, -s * 0.2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, s * 3, s * 1.5, Math.PI, 0);
+                ctx.stroke();
+                break;
+            default:
+                ctx.beginPath();
+                ctx.moveTo(-s * 2, s * 2);
+                ctx.lineTo(s * 2, s * 2);
+                ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // ── POSE SETTERS ──
+
+    poseIdle() {
+        this.targets.torsoAngle    =  0;
+        this.targets.leftArmAngle  =  0.25;
+        this.targets.rightArmAngle = -0.25;
+        this.targets.leftForeAngle =  0.15;
+        this.targets.rightForeAngle= -0.15;
+        this.targets.leftLegAngle  =  0.05;
+        this.targets.rightLegAngle = -0.05;
+        this.targets.leftShinAngle =  0.05;
+        this.targets.rightShinAngle= -0.05;
+        this.targets.headAngle     =  0;
+        this.targetOffY            =  0;
+    }
+
+    poseWalk(phase) {
+        const p = phase;
+        this.targets.leftLegAngle   =  Math.sin(p) * 0.55;
+        this.targets.rightLegAngle  = -Math.sin(p) * 0.55;
+        this.targets.leftShinAngle  =  Math.max(0, Math.sin(p + 0.5) * 0.4);
+        this.targets.rightShinAngle =  Math.max(0, Math.sin(p + 0.5 + Math.PI) * 0.4);
+        this.targets.leftArmAngle   = -Math.sin(p) * 0.4;
+        this.targets.rightArmAngle  =  Math.sin(p) * 0.4;
+        this.targets.torsoAngle     =  Math.sin(p) * 0.04;
+        this.targets.headAngle      =  0;
+        this.targetOffY             =  Math.abs(Math.sin(p * 2)) * -3 * this.scale;
+    }
+
+    poseRun(phase) {
+        const p = phase;
+        this.targets.leftLegAngle   =  Math.sin(p) * 0.85;
+        this.targets.rightLegAngle  = -Math.sin(p) * 0.85;
+        this.targets.leftShinAngle  =  Math.max(0, Math.sin(p + 0.6) * 0.7);
+        this.targets.rightShinAngle =  Math.max(0, Math.sin(p + 0.6 + Math.PI) * 0.7);
+        this.targets.leftArmAngle   = -Math.sin(p) * 0.7;
+        this.targets.rightArmAngle  =  Math.sin(p) * 0.7;
+        this.targets.torsoAngle     =  0.18;
+        this.targets.headAngle      =  0;
+        this.targetOffY             =  Math.abs(Math.sin(p * 2)) * -6 * this.scale;
+    }
+
+    poseDance(phase) {
+        const p = phase;
+        this.targets.leftArmAngle   = -0.8 + Math.sin(p * 2) * 0.6;
+        this.targets.rightArmAngle  =  0.8 + Math.sin(p * 2 + 1) * 0.6;
+        this.targets.leftForeAngle  = -0.5 + Math.sin(p * 3) * 0.4;
+        this.targets.rightForeAngle =  0.5 + Math.sin(p * 3 + 1) * 0.4;
+        this.targets.leftLegAngle   =  Math.sin(p * 2) * 0.35;
+        this.targets.rightLegAngle  = -Math.sin(p * 2) * 0.35;
+        this.targets.torsoAngle     =  Math.sin(p * 1.5) * 0.15;
+        this.targets.headAngle      =  Math.sin(p * 2) * 0.1;
+        this.targetOffY             =  Math.sin(p * 4) * -4 * this.scale;
+    }
+
+    poseFight(phase) {
+        const p = phase;
+        const punch = Math.sin(p * 3) > 0.5;
+        this.targets.rightArmAngle  = punch ? -1.2 : -0.3;
+        this.targets.rightForeAngle = punch ?  0.4 : -0.2;
+        this.targets.leftArmAngle   = punch ?  0.4 :  0.8;
+        this.targets.leftForeAngle  = punch ? -0.3 :  0.5;
+        this.targets.torsoAngle     =  Math.sin(p * 2) * 0.2;
+        this.targets.leftLegAngle   =  0.2;
+        this.targets.rightLegAngle  = -0.2;
+        this.targets.leftShinAngle  =  0.1;
+        this.targets.rightShinAngle = -0.1;
+        this.targetOffY             =  0;
+    }
+
+    poseCry(phase) {
+        const p = phase;
+        this.targets.headAngle      =  0.3;
+        this.targets.torsoAngle     =  0.2 + Math.sin(p * 3) * 0.05;
+        this.targets.leftArmAngle   = -0.4;
+        this.targets.rightArmAngle  =  0.4;
+        this.targets.leftForeAngle  = -0.8;
+        this.targets.rightForeAngle =  0.8;
+        this.targets.leftLegAngle   =  0.05;
+        this.targets.rightLegAngle  = -0.05;
+        this.targetOffY             =  Math.sin(p * 2) * 2;
+    }
+
+    poseLaugh(phase) {
+        const p = phase;
+        this.targets.torsoAngle     =  0.25 + Math.sin(p * 4) * 0.1;
+        this.targets.headAngle      =  Math.sin(p * 4) * 0.08;
+        this.targets.leftArmAngle   = -0.5 + Math.sin(p * 3) * 0.2;
+        this.targets.rightArmAngle  =  0.5 + Math.sin(p * 3) * 0.2;
+        this.targets.leftLegAngle   =  0.1;
+        this.targets.rightLegAngle  = -0.1;
+        this.targetOffY             =  Math.sin(p * 4) * -3 * this.scale;
+    }
+
+    poseScared(phase) {
+        const p = phase;
+        this.targets.torsoAngle     = -0.15 + Math.sin(p * 8) * 0.05;
+        this.targets.headAngle      = -0.1;
+        this.targets.leftArmAngle   = -1.0;
+        this.targets.rightArmAngle  =  1.0;
+        this.targets.leftForeAngle  = -0.5;
+        this.targets.rightForeAngle =  0.5;
+        this.targets.leftLegAngle   = -0.15;
+        this.targets.rightLegAngle  =  0.15;
+        this.targetOffY             =  Math.sin(p * 8) * 2;
+    }
+
+    poseFall(progress) {
+        const t = Math.min(progress, 1);
+        this.targets.torsoAngle     =  t * 1.57;
+        this.targets.headAngle      =  t * 0.5;
+        this.targets.leftArmAngle   = -t * 1.0;
+        this.targets.rightArmAngle  =  t * 1.2;
+        this.targets.leftLegAngle   =  t * 0.3;
+        this.targets.rightLegAngle  =  t * 0.5;
+        this.targetOffY             =  t * 20 * this.scale;
+    }
+
+    poseCelebrate(phase) {
+        const p = phase;
+        this.targets.leftArmAngle   = -1.4 + Math.sin(p * 3) * 0.3;
+        this.targets.rightArmAngle  =  1.4 + Math.sin(p * 3 + 1) * 0.3;
+        this.targets.leftForeAngle  = -1.0;
+        this.targets.rightForeAngle =  1.0;
+        this.targets.leftLegAngle   =  Math.sin(p * 2) * 0.4;
+        this.targets.rightLegAngle  = -Math.sin(p * 2) * 0.4;
+        this.targets.torsoAngle     =  Math.sin(p * 2) * 0.1;
+        this.targetOffY             =  Math.sin(p * 4) * -8 * this.scale;
+    }
+
+    poseWave(phase) {
+        const p = phase;
+        this.targets.rightArmAngle  =  1.2 + Math.sin(p * 4) * 0.3;
+        this.targets.rightForeAngle =  0.5 + Math.sin(p * 4) * 0.3;
+        this.targets.leftArmAngle   =  0.2;
+        this.targets.torsoAngle     =  0;
+        this.targets.headAngle      =  0;
+        this.targets.leftLegAngle   =  0.05;
+        this.targets.rightLegAngle  = -0.05;
+        this.targetOffY             =  0;
+    }
+
+    poseSit() {
+        this.targets.torsoAngle     =  0.1;
+        this.targets.leftLegAngle   =  1.4;
+        this.targets.rightLegAngle  =  1.4;
+        this.targets.leftShinAngle  = -1.2;
+        this.targets.rightShinAngle = -1.2;
+        this.targets.leftArmAngle   =  0.3;
+        this.targets.rightArmAngle  = -0.3;
+        this.targets.headAngle      =  0;
+        this.targetOffY             =  16 * this.scale;
+    }
+
+    poseAngry(phase) {
+        const p = phase;
+        this.targets.torsoAngle     =  0.1 + Math.sin(p * 5) * 0.05;
+        this.targets.rightArmAngle  =  1.0;
+        this.targets.rightForeAngle =  0.3;
+        this.targets.leftArmAngle   = -0.5;
+        this.targets.headAngle      = -0.1;
+        this.targets.leftLegAngle   =  0.15;
+        this.targets.rightLegAngle  = -0.2;
+        this.targetOffY             =  Math.sin(p * 5) * 1.5;
+    }
+
+    poseJog(phase) {
+        this.poseRun(phase * 1.3);
+        this.targets.torsoAngle = 0.08;
+    }
+
+    poseHit() {
+        this.targets.torsoAngle     =  0.5;
+        this.targets.headAngle      =  0.3;
+        this.targets.leftArmAngle   = -1.2;
+        this.targets.rightArmAngle  =  1.2;
+        this.targets.leftLegAngle   =  0.6;
+        this.targets.rightLegAngle  =  0.3;
+        this.targetOffY             =  8 * this.scale;
+    }
+}
+
+// ============================================================
+// PROPS — Cars, fire, stoplight
+// ============================================================
+
+function drawCar(ctx, x, y, scale, facing) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(facing, 1);
+    const s = scale;
+
+    // Body
+    ctx.fillStyle    = '#1a1a1a';
+    ctx.strokeStyle  = '#555';
+    ctx.lineWidth    = s * 1.5;
+
+    // Main body
+    ctx.beginPath();
+    ctx.roundRect(-s * 40, -s * 16, s * 80, s * 22, s * 3);
+    ctx.fill();
+    ctx.stroke();
+
+    // Roof
+    ctx.beginPath();
+    ctx.roundRect(-s * 25, -s * 30, s * 50, s * 16, s * 4);
+    ctx.fill();
+    ctx.stroke();
+
+    // Windows
+    ctx.fillStyle = 'rgba(40,60,80,0.7)';
+    ctx.beginPath();
+    ctx.roundRect(-s * 22, -s * 28, s * 20, s * 12, s * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(s * 2, -s * 28, s * 20, s * 12, s * 2);
+    ctx.fill();
+
+    // Wheels
+    ctx.fillStyle   = '#111';
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth   = s * 1.5;
+    [-s * 25, s * 25].forEach(wx => {
+        ctx.beginPath();
+        ctx.arc(wx, s * 8, s * 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(wx, s * 8, s * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#111';
+    });
+
+    // Headlight
+    const hx = facing > 0 ? s * 38 : -s * 38;
+    const hg = ctx.createRadialGradient(hx, -s * 4, 0, hx, -s * 4, s * 14);
+    hg.addColorStop(0,   'rgba(255,240,180,0.9)');
+    hg.addColorStop(1,   'transparent');
+    ctx.fillStyle = hg;
+    ctx.beginPath();
+    ctx.arc(hx, -s * 4, s * 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawFire(ctx, x, y, scale, frame) {
+    ctx.save();
+    ctx.translate(x, y);
+    const s = scale;
+    const layers = [
+        { r: s * 28, color: 'rgba(255,50,0,0.5)',  oy: 0 },
+        { r: s * 20, color: 'rgba(255,150,0,0.6)', oy: -s * 5 },
+        { r: s * 12, color: 'rgba(255,230,0,0.7)', oy: -s * 12 },
+    ];
+    layers.forEach((l, i) => {
+        const flicker = Math.sin(frame * 0.15 + i * 1.2) * s * 4;
+        const fg = ctx.createRadialGradient(0, l.oy, 0, 0, l.oy, l.r + flicker);
+        fg.addColorStop(0,   l.color);
+        fg.addColorStop(1,   'transparent');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.ellipse(0, l.oy, l.r + flicker, l.r * 1.5 + flicker, 0, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.restore();
+}
+
+function drawStoplight(ctx, x, y, scale) {
+    ctx.save();
+    ctx.translate(x, y);
+    const s = scale;
+
+    // Pole
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth   = s * 3;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -s * 60);
+    ctx.stroke();
+
+    // Box
+    ctx.fillStyle   = '#222';
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth   = s * 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-s * 8, -s * 80, s * 16, s * 22, s * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Red light on
+    const rg = ctx.createRadialGradient(0, -s * 74, 0, 0, -s * 74, s * 5);
+    rg.addColorStop(0,   'rgba(255,30,30,0.9)');
+    rg.addColorStop(1,   'rgba(180,0,0,0.3)');
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(0, -s * 74, s * 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+// ============================================================
+// SCENE RENDERER
+// ============================================================
+
+class Theater {
+    constructor() {
+        this.figureA   = null;
+        this.figureB   = null;
+        this.sequence  = [];
+        this.current   = 0;
+        this.elapsed   = 0;
+        this.totalTime = 0;
+        this.frame     = 0;
+        this.running   = false;
+        this.sceneTitle= '';
+        this.props     = {};
+        this.phase     = 0;
+    }
+
+    init(sequence, sceneTitle) {
+        this.sequence   = sequence;
+        this.sceneTitle = sceneTitle || 'Untitled Scene';
+        this.current    = 0;
+        this.elapsed    = 0;
+        this.frame      = 0;
+        this.phase      = 0;
+        this.running    = true;
+        this.props      = {};
+
+        this.totalTime  = sequence.reduce((s, e) => s + (e.duration || 2000), 0);
+
+        // Figure placement
+        const scale = Math.min(W, H) * 0.0022;
+        this.figureA = new StickFigure(W * 0.38, H * 0.62, scale, '#c8c8b0');
+        this.figureB = new StickFigure(W * 0.62, H * 0.62, scale, '#a0a090');
+        this.figureB.facing = -1;
+
+        document.getElementById('hudSceneTitle').textContent = sceneTitle.toUpperCase();
+    }
+
+    update(dt) {
+        if (!this.running || !this.sequence.length) return;
+
+        this.elapsed += dt;
+        this.frame++;
+        this.phase   += dt * 0.003;
+
+        const event = this.sequence[this.current];
+        if (!event) { this.running = false; return; }
+
+        const pct = Math.min(this.elapsed / event.duration, 1);
+
+        this._applyEvent(event, pct);
+        this.figureA.update(dt);
+        this.figureB.update(dt);
+
+        if (this.elapsed >= event.duration) {
+            this.elapsed = 0;
+            this.current++;
+            if (this.current >= this.sequence.length) {
+                this.running = false;
+            } else {
+                this._announceEvent(this.sequence[this.current]);
+            }
+        }
+
+        this._updateHUD();
+    }
+
+    _applyEvent(event, pct) {
+        const fa = this.figureA;
+        const fb = this.figureB;
+        const targets = event.figure === 'figure_b' ? [fb]
+                      : event.figure === 'both'     ? [fa, fb]
+                      : [fa];
+
+        // Set facing for locomotion
+        if (['walk','run','run_away'].includes(event.id)) {
+            fa.facing =  1;
+            fb.facing = -1;
+        }
+
+        targets.forEach(fig => {
+            fig.emotion = event.emotion || 'neutral';
+
+            switch(event.id) {
+                case 'idle':
+                    fig.poseIdle(); break;
+                case 'walk':
+                    fig.walkPhase += 0.08;
+                    fig.poseWalk(fig.walkPhase);
+                    fig.x += fig.facing * 0.8;
+                    if (fig.x > W * 0.85) fig.x = W * 0.15;
+                    if (fig.x < W * 0.15) fig.x = W * 0.85;
+                    break;
+                case 'run':
+                case 'run_away':
+                    fig.walkPhase += 0.14;
+                    fig.poseRun(fig.walkPhase);
+                    fig.x += fig.facing * 2.2;
+                    if (fig.x > W * 0.9) fig.x = W * 0.1;
+                    if (fig.x < W * 0.1) fig.x = W * 0.9;
+                    break;
+                case 'jog_in_place':
+                    fig.walkPhase += 0.1;
+                    fig.poseJog(fig.walkPhase);
+                    break;
+                case 'dance':
+                    fig.poseDance(this.phase); break;
+                case 'boxing_match':
+                    fig.poseFight(this.phase);
+                    if (fig === fa) fa.facing =  1;
+                    if (fig === fb) fb.facing = -1;
+                    break;
+                case 'punch':
+                    fig.poseFight(this.phase * 2); break;
+                case 'cry':
+                    fig.poseCry(this.phase); break;
+                case 'laugh':
+                    fig.poseLaugh(this.phase); break;
+                case 'scared':
+                    fig.poseScared(this.phase); break;
+                case 'celebrate':
+                    fig.poseCelebrate(this.phase); break;
+                case 'wave':
+                    fig.poseWave(this.phase); break;
+                case 'sit_down':
+                    fig.poseSit(); break;
+                case 'angry':
+                case 'argue':
+                    fig.poseAngry(this.phase); break;
+                case 'hit_by_car':
+                    fig.poseHit();
+                    fig.alpha = pct > 0.7 ? 1 - ((pct - 0.7) / 0.3) : 1;
+                    this.props.car = { x: W * 0.5, y: fig.y, facing: 1 };
+                    break;
+                case 'car_drives_by':
+                    this.props.car = {
+                        x: W * pct * 1.4 - W * 0.1,
+                        y: H * 0.68,
+                        facing: 1,
+                    };
+                    break;
+                case 'get_in_car':
+                    this.props.car = { x: fig.x + 60, y: fig.y, facing: 1 };
+                    fig.walkPhase += 0.06;
+                    if (pct < 0.7) {
+                        fig.poseWalk(fig.walkPhase);
+                        fig.x += fig.facing * 0.8;
+                    } else {
+                        fig.alpha = 1 - ((pct - 0.7) / 0.3);
+                    }
+                    break;
+                case 'plane_crash':
+                    this.props.fire = { x: W * 0.5, y: H * 0.5 };
+                    fig.poseFall(pct);
+                    break;
+                case 'knocked_out':
+                    fig.poseFall(pct); break;
+                case 'hug':
+                    if (fig === fa) fa.facing =  1;
+                    if (fig === fb) fb.facing = -1;
+                    fa.targets.leftArmAngle  = -1.2;
+                    fa.targets.rightArmAngle =  1.2;
+                    fb.targets.leftArmAngle  = -1.2;
+                    fb.targets.rightArmAngle =  1.2;
+                    fa.x += (W * 0.5 - fa.x) * 0.02;
+                    fb.x += (W * 0.5 - fb.x) * 0.02;
+                    break;
+                case 'stop_light':
+                    this.props.stoplight = { x: W * 0.5, y: H * 0.62 };
+                    fig.walkPhase += 0.1;
+                    fig.poseJog(fig.walkPhase);
+                    break;
+                default:
+                    fig.poseIdle(); break;
+            }
+        });
+    }
+
+    _announceEvent(event) {
+        const el    = document.getElementById('hudEvent');
+        const cap   = document.getElementById('caption');
+        el.textContent  = event.label || '';
+        cap.textContent = event.label || '';
+        el.classList.add('visible');
+        cap.classList.add('show');
+        setTimeout(() => {
+            el.classList.remove('visible');
+            cap.classList.remove('show');
+        }, 1800);
+        soundEngine.play(event.sound);
+    }
+
+    _updateHUD() {
+        const totalElapsed = this.sequence
+            .slice(0, this.current)
+            .reduce((s, e) => s + e.duration, 0) + this.elapsed;
+
+        const pct = Math.min(totalElapsed / this.totalTime * 100, 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+
+        const secs = Math.floor(totalElapsed / 1000);
+        const m    = Math.floor(secs / 60);
+        const s    = secs % 60;
+        document.getElementById('progressTime').textContent =
+            `${m}:${s.toString().padStart(2, '0')}`;
+
+        const cur = this.sequence[this.current];
+        if (cur) {
+            document.getElementById('progressEvent').textContent =
+                (cur.label || '').toUpperCase();
+        }
+    }
+
+    draw() {
+        // Background
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#050101');
+        bg.addColorStop(1, '#0a0101');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Ground glow
+        const gg = ctx.createRadialGradient(W/2, H, 0, W/2, H, W * 0.7);
+        gg.addColorStop(0,   'rgba(80,0,0,0.3)');
+        gg.addColorStop(0.6, 'rgba(40,0,0,0.1)');
+        gg.addColorStop(1,   'transparent');
+        ctx.fillStyle = gg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Ground line
+        ctx.strokeStyle = 'rgba(139,0,0,0.25)';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(0,   H * 0.68);
+        ctx.lineTo(W, H * 0.68);
+        ctx.stroke();
+
+        // Props
+        const scale = Math.min(W, H) * 0.0022;
+        if (this.props.car) {
+            const c = this.props.car;
+            drawCar(ctx, c.x, c.y || H * 0.64, scale * 18, c.facing || 1);
+        }
+        if (this.props.fire) {
+            drawFire(ctx, this.props.fire.x, this.props.fire.y, scale * 12, this.frame);
+        }
+        if (this.props.stoplight) {
+            drawStoplight(ctx, this.props.stoplight.x, H * 0.62, scale * 10);
+        }
+
+        // Figures
+        if (this.figureA) this.figureA.draw(ctx);
+        if (this.figureB) this.figureB.draw(ctx);
+
+        // Ambient embers
+        this._drawEmbers();
+    }
+
+    _drawEmbers() {
+        if (!this._embers) {
+            this._embers = Array.from({length: 25}, () => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                r: Math.random() * 1.2 + 0.3,
+                vx: (Math.random() - 0.5) * 0.2,
+                vy: -(Math.random() * 0.3 + 0.1),
+                flicker: Math.random() * Math.PI * 2,
+                fs: 0.02 + Math.random() * 0.03,
+            }));
+        }
+        this._embers.forEach(e => {
+            e.x += e.vx; e.y += e.vy; e.flicker += e.fs;
+            if (e.y < -5) { e.y = H + 5; e.x = Math.random() * W; }
+            const f  = 0.3 + Math.sin(e.flicker) * 0.3;
+            const eg = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.r * 2);
+            eg.addColorStop(0, `rgba(255,60,10,${f})`);
+            eg.addColorStop(1, 'transparent');
+            ctx.fillStyle = eg;
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.r * 2, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
+// ============================================================
+// SOUND ENGINE — Web Audio API
+// ============================================================
+
+class SoundEngine {
+    constructor() {
+        this.ac = null;
+    }
+
+    _ensure() {
+        if (!this.ac) this.ac = new AudioContext();
+        if (this.ac.state === 'suspended') this.ac.resume();
+    }
+
+    play(soundId) {
+        if (!soundId) return;
+        this._ensure();
+        const ac = this.ac;
+        const now = ac.currentTime;
+
+        switch(soundId) {
+            case 'footsteps':
+                this._noise(ac, now, 80,  0.001, 0.08, 0, 0.05, 0.35, 'lowpass', 200); break;
+            case 'footsteps_fast':
+                this._noise(ac, now, 100, 0.001, 0.05, 0, 0.03, 0.5,  'lowpass', 250); break;
+            case 'thud':
+                this._osc(ac, now, 'sine', 120, 40, 0.001, 0.3, 0, 0.2, 0.7);
+                this._noise(ac, now, 0, 0.001, 0.15, 0, 0.1, 0.4, 'lowpass', 300); break;
+            case 'punch_impact':
+                this._noise(ac, now, 0, 0.001, 0.08, 0, 0.05, 0.6, 'bandpass', 800);
+                this._osc(ac, now, 'sine', 200, 80, 0.001, 0.1, 0, 0.05, 0.4); break;
+            case 'car_impact':
+                this._noise(ac, now, 0, 0.001, 0.4, 0.1, 0.3, 0.8, 'lowpass', 1000);
+                this._osc(ac, now, 'sawtooth', 300, 50, 0.001, 0.5, 0, 0.3, 0.6); break;
+            case 'car_engine':
+                this._osc(ac, now, 'sawtooth', 80, 120, 0.3, 0, 0.8, 0.5, 0.45); break;
+            case 'car_door':
+                this._noise(ac, now, 0, 0.001, 0.2, 0, 0.1, 0.5, 'bandpass', 600); break;
+            case 'crying':
+                this._osc(ac, now, 'sine', 300, 250, 0.2, 0.3, 0.5, 0.4, 0.35); break;
+            case 'laughter':
+                this._osc(ac, now, 'sine', 400, 350, 0.05, 0.1, 0.2, 0.1, 0.45); break;
+            case 'yelling':
+                this._osc(ac, now, 'sawtooth', 250, 300, 0.05, 0.1, 0.6, 0.2, 0.6); break;
+            case 'scream':
+                this._osc(ac, now, 'sawtooth', 500, 700, 0.02, 0.1, 0.7, 0.3, 0.7); break;
+            case 'cheer':
+                this._noise(ac, now, 0, 0.3, 0.2, 0.6, 0.5, 0.5, 'bandpass', 1500); break;
+            case 'explosion':
+                this._noise(ac, now, 0, 0.001, 0.8, 0.3, 1.0, 0.9, 'lowpass', 800);
+                this._osc(ac, now, 'sine', 150, 20, 0.001, 1.0, 0, 0.5, 0.8); break;
+            case 'whoosh_soft':
+                this._noise(ac, now, 0, 0.05, 0.15, 0, 0.1, 0.25, 'bandpass', 2000); break;
+        }
+    }
+
+    _osc(ac, now, type, freqStart, freqEnd, attack, decay, sustain, release, vol) {
+        try {
+            const osc  = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freqStart, now);
+            osc.frequency.linearRampToValueAtTime(freqEnd, now + attack + decay + 0.1);
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(vol, now + attack);
+            gain.gain.linearRampToValueAtTime(vol * sustain, now + attack + decay);
+            gain.gain.linearRampToValueAtTime(0, now + attack + decay + release);
+            osc.connect(gain); gain.connect(ac.destination);
+            osc.start(now);
+            osc.stop(now + attack + decay + release + 0.1);
+        } catch(e) {}
+    }
+
+    _noise(ac, now, freq, attack, decay, sustain, release, vol, filterType, filterFreq) {
+        try {
+            const bufSize = ac.sampleRate * (attack + decay + release + 0.2);
+            const buf     = ac.createBuffer(1, bufSize, ac.sampleRate);
+            const data    = buf.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+            const source = ac.createBufferSource();
+            source.buffer = buf;
+
+            const filter = ac.createBiquadFilter();
+            filter.type            = filterType || 'lowpass';
+            filter.frequency.value = filterFreq || 1000;
+
+            const gain = ac.createGain();
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(vol, now + attack);
+            gain.gain.linearRampToValueAtTime(vol * (sustain || 0), now + attack + decay);
+            gain.gain.linearRampToValueAtTime(0, now + attack + decay + release);
+
+            source.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+            source.start(now);
+            source.stop(now + attack + decay + release + 0.1);
+        } catch(e) {}
+    }
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+
+const theater     = new Theater();
+const soundEngine = new SoundEngine();
+let   lastTime    = null;
+
+function loop(ts) {
+    if (!lastTime) lastTime = ts;
+    const dt = ts - lastTime;
+    lastTime = ts;
+
+    theater.update(dt);
+    theater.draw();
+    requestAnimationFrame(loop);
+}
+
+function replayScene() {
+    if (theater.sequence.length) {
+        theater.init(theater.sequence, theater.sceneTitle);
+    }
+}
+
+async function loadScene() {
+    const params   = new URLSearchParams(window.location.search);
+    const ticketId = window.location.pathname.split('/').pop();
+
+    // Simulate loading bar
+    const bar = document.getElementById('loadingBar');
+    let prog  = 0;
+    const loadInterval = setInterval(() => {
+        prog = Math.min(prog + Math.random() * 15, 85);
+        bar.style.width = prog + '%';
+    }, 120);
+
+    try {
+        const res  = await fetch(`/api/theater/preview/${ticketId}`);
+        const data = await res.json();
+
+        clearInterval(loadInterval);
+        bar.style.width = '100%';
+
+        await new Promise(r => setTimeout(r, 400));
+
+        if (data.success) {
+            theater.init(data.sequence, data.ticket.title);
+            soundEngine.play('whoosh_soft');
+        } else {
+            // Fallback demo sequence if no ticket found
+            theater.init(getDemoSequence(), 'Demo Scene');
+        }
+    } catch(err) {
+        clearInterval(loadInterval);
+        bar.style.width = '100%';
+        theater.init(getDemoSequence(), 'Demo Scene');
+    }
+
+    // Fade loading screen
+    await new Promise(r => setTimeout(r, 300));
+    document.getElementById('loadingScreen').classList.add('fade-out');
+    setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('curtain').classList.add('open');
+    }, 800);
+
+    requestAnimationFrame(loop);
+}
+
+function getDemoSequence() {
+    return [
+        { type:'behavior', id:'walk',        label:'Walking',       figure:'both',     atoms:[], duration:2500, loop:false, sound:'footsteps',  props:[], emotion:'neutral' },
+        { type:'behavior', id:'wave',         label:'Waving',        figure:'figure_a', atoms:[], duration:2000, loop:false, sound:null,          props:[], emotion:'happy'   },
+        { type:'behavior', id:'dance',        label:'Dancing',       figure:'both',     atoms:[], duration:4000, loop:true,  sound:null,          props:[], emotion:'happy'   },
+        { type:'behavior', id:'car_drives_by',label:'Car Drives By', figure:'figure_a', atoms:[], duration:2500, loop:false, sound:'car_engine',  props:['car'], emotion:'neutral' },
+        { type:'behavior', id:'hit_by_car',   label:'Hit By Car',    figure:'figure_b', atoms:[], duration:2000, loop:false, sound:'car_impact',  props:['car'], emotion:'neutral' },
+        { type:'behavior', id:'scared',       label:'Scared',        figure:'figure_a', atoms:[], duration:2000, loop:false, sound:'scream',      props:[], emotion:'scared'  },
+        { type:'behavior', id:'run_away',     label:'Running Away',  figure:'figure_a', atoms:[], duration:2500, loop:false, sound:'footsteps_fast', props:[], emotion:'scared' },
+    ];
+}
+
+// Start
+loadScene();
+</script>
+</body>
+</html>

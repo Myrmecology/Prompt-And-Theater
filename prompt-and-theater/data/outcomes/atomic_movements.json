@@ -1,0 +1,210 @@
+[
+    {
+        "id": "head_nod",
+        "label": "Head Nod",
+        "body_part": "head",
+        "movement": "rotate_down_up",
+        "triggers": ["nod", "nodding", "agrees", "yes"],
+        "default_duration": 600
+    },
+    {
+        "id": "head_shake",
+        "label": "Head Shake",
+        "body_part": "head",
+        "movement": "rotate_left_right",
+        "triggers": ["shakes head", "disagrees", "no"],
+        "default_duration": 600
+    },
+    {
+        "id": "head_tilt",
+        "label": "Head Tilt",
+        "body_part": "head",
+        "movement": "rotate_side",
+        "triggers": ["tilts head", "confused look", "curious"],
+        "default_duration": 500
+    },
+    {
+        "id": "head_down",
+        "label": "Head Down",
+        "body_part": "head",
+        "movement": "rotate_down",
+        "triggers": ["looks down", "hangs head", "bows head"],
+        "default_duration": 700
+    },
+    {
+        "id": "head_up",
+        "label": "Head Up",
+        "body_part": "head",
+        "movement": "rotate_up",
+        "triggers": ["looks up", "gazes up", "stares up"],
+        "default_duration": 500
+    },
+    {
+        "id": "torso_lean_forward",
+        "label": "Lean Forward",
+        "body_part": "torso",
+        "movement": "rotate_forward",
+        "triggers": ["leans forward", "leans in", "bends forward"],
+        "default_duration": 600
+    },
+    {
+        "id": "torso_lean_back",
+        "label": "Lean Back",
+        "body_part": "torso",
+        "movement": "rotate_back",
+        "triggers": ["leans back", "recoils", "steps back"],
+        "default_duration": 600
+    },
+    {
+        "id": "torso_twist_left",
+        "label": "Torso Twist Left",
+        "body_part": "torso",
+        "movement": "rotate_left",
+        "triggers": ["turns left", "looks left", "twists left"],
+        "default_duration": 400
+    },
+    {
+        "id": "torso_twist_right",
+        "label": "Torso Twist Right",
+        "body_part": "torso",
+        "movement": "rotate_right",
+        "triggers": ["turns right", "looks right", "twists right"],
+        "default_duration": 400
+    },
+    {
+        "id": "right_arm_raise",
+        "label": "Right Arm Raise",
+        "body_part": "right_arm",
+        "movement": "raise",
+        "triggers": ["raises right arm", "right arm up", "right hand up"],
+        "default_duration": 500
+    },
+    {
+        "id": "left_arm_raise",
+        "label": "Left Arm Raise",
+        "body_part": "left_arm",
+        "movement": "raise",
+        "triggers": ["raises left arm", "left arm up", "left hand up"],
+        "default_duration": 500
+    },
+    {
+        "id": "both_arms_raise",
+        "label": "Both Arms Raise",
+        "body_part": "both_arms",
+        "movement": "raise",
+        "triggers": ["raises arms", "arms up", "hands up"],
+        "default_duration": 500
+    },
+    {
+        "id": "arms_cover_face",
+        "label": "Arms Cover Face",
+        "body_part": "both_arms",
+        "movement": "raise_to_face",
+        "triggers": ["covers face", "hides face", "face in hands"],
+        "default_duration": 600
+    },
+    {
+        "id": "arms_crossed",
+        "label": "Arms Crossed",
+        "body_part": "both_arms",
+        "movement": "cross",
+        "triggers": ["crosses arms", "arms folded", "folds arms"],
+        "default_duration": 500
+    },
+    {
+        "id": "right_arm_point",
+        "label": "Right Arm Point",
+        "body_part": "right_arm",
+        "movement": "extend_point",
+        "triggers": ["points", "pointing", "gestures toward"],
+        "default_duration": 600
+    },
+    {
+        "id": "right_arm_swing",
+        "label": "Right Arm Swing",
+        "body_part": "right_arm",
+        "movement": "swing_forward",
+        "triggers": ["swings right arm", "right arm swing"],
+        "default_duration": 400
+    },
+    {
+        "id": "left_arm_swing",
+        "label": "Left Arm Swing",
+        "body_part": "left_arm",
+        "movement": "swing_forward",
+        "triggers": ["swings left arm", "left arm swing"],
+        "default_duration": 400
+    },
+    {
+        "id": "left_leg_lift",
+        "label": "Left Leg Lift",
+        "body_part": "left_leg",
+        "movement": "lift",
+        "triggers": ["left leg lifts", "lifts left leg", "left knee up"],
+        "default_duration": 400
+    },
+    {
+        "id": "right_leg_lift",
+        "label": "Right Leg Lift",
+        "body_part": "right_leg",
+        "movement": "lift",
+        "triggers": ["right leg lifts", "lifts right leg", "right knee up"],
+        "default_duration": 400
+    },
+    {
+        "id": "legs_wide_stance",
+        "label": "Wide Stance",
+        "body_part": "both_legs",
+        "movement": "spread",
+        "triggers": ["wide stance", "legs apart", "plants feet"],
+        "default_duration": 400
+    },
+    {
+        "id": "legs_together",
+        "label": "Legs Together",
+        "body_part": "both_legs",
+        "movement": "close",
+        "triggers": ["feet together", "stands straight", "legs together"],
+        "default_duration": 300
+    },
+    {
+        "id": "whole_body_shake",
+        "label": "Whole Body Shake",
+        "body_part": "whole_body",
+        "movement": "oscillate",
+        "triggers": ["shakes", "trembles", "quivers", "shivers"],
+        "default_duration": 1000
+    },
+    {
+        "id": "whole_body_jump",
+        "label": "Jump",
+        "body_part": "whole_body",
+        "movement": "jump",
+        "triggers": ["jumps", "leaps", "hops"],
+        "default_duration": 600
+    },
+    {
+        "id": "whole_body_spin",
+        "label": "Spin",
+        "body_part": "whole_body",
+        "movement": "spin_360",
+        "triggers": ["spins", "twirls", "rotates"],
+        "default_duration": 800
+    },
+    {
+        "id": "whole_body_fall",
+        "label": "Fall Down",
+        "body_part": "whole_body",
+        "movement": "fall",
+        "triggers": ["falls", "collapses", "drops to ground", "falls down"],
+        "default_duration": 800
+    },
+    {
+        "id": "whole_body_crouch",
+        "label": "Crouch",
+        "body_part": "whole_body",
+        "movement": "crouch",
+        "triggers": ["crouches", "ducks", "squats"],
+        "default_duration": 500
+    }
+]

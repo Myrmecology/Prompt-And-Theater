@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Prompt And Theater</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- TITLE SCREEN -->
+    <!-- ============================================================ -->
+    <div id="title-screen">
+        <div class="title-container">
+            <div class="title-top">Prompt And</div>
+            <div class="title-bottom">
+                <span class="letter">T</span>
+                <span class="letter">H</span>
+                <span class="letter">E</span>
+                <span class="letter">A</span>
+                <span class="letter">T</span>
+                <span class="letter">E</span>
+                <span class="letter">R</span>
+            </div>
+            <div class="blood-floor"></div>
+        </div>
+
+        <div class="title-ui">
+            <div class="name-entry">
+                <label for="player-name">ENTER YOUR NAME, TRAVELER</label>
+                <input type="text" id="player-name" maxlength="20" placeholder="Stranger" autocomplete="off" />
+            </div>
+            <button id="begin-btn" class="begin-button">BEGIN YOUR FATE</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- LOADING SCREEN -->
+    <!-- ============================================================ -->
+    <div id="loading-screen" class="hidden">
+        <div class="loading-content">
+            <div class="loading-rune">✦</div>
+            <p class="loading-text">The fates are weaving your story...</p>
+            <div class="loading-bar">
+                <div class="loading-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- GAME SCREEN -->
+    <!-- ============================================================ -->
+    <div id="game-screen" class="hidden">
+
+        <div class="game-header">
+            <div class="game-logo">Prompt And Theater</div>
+            <div class="player-stats">
+                <div class="stat" id="stat-health">
+                    <span class="stat-icon">♥</span>
+                    <span class="stat-label">Health</span>
+                    <span class="stat-value" id="health-value">100</span>
+                </div>
+                <div class="stat" id="stat-gold">
+                    <span class="stat-icon">◈</span>
+                    <span class="stat-label">Gold</span>
+                    <span class="stat-value" id="gold-value">10</span>
+                </div>
+                <div class="stat" id="stat-reputation">
+                    <span class="stat-icon">⚜</span>
+                    <span class="stat-label">Repute</span>
+                    <span class="stat-value" id="reputation-value">50</span>
+                </div>
+                <div class="stat" id="stat-act">
+                    <span class="stat-icon">📜</span>
+                    <span class="stat-label">Act</span>
+                    <span class="stat-value" id="act-value">I</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-body">
+            <div class="scene-image-container">
+                <div class="scene-image-frame">
+                    <img id="scene-image" src="" alt="Scene" />
+                    <div class="image-overlay"></div>
+                </div>
+                <div class="location-badge" id="location-badge">Valdermoor</div>
+            </div>
+
+            <div class="scene-content">
+                <div class="narrative-container">
+                    <div class="narrative-text" id="narrative-text"></div>
+                </div>
+
+                <div class="choices-container" id="choices-container"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- GAME OVER SCREEN -->
+    <!-- ============================================================ -->
+    <div id="gameover-screen" class="hidden">
+        <div class="gameover-content">
+            <div class="gameover-skull">💀</div>
+            <h2 class="gameover-title">YOUR STORY ENDS</h2>
+            <p class="gameover-message" id="gameover-message"></p>
+            <div class="gameover-stats" id="gameover-stats"></div>
+            <button class="restart-button" id="restart-btn">FORGE A NEW FATE</button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TRANSITION OVERLAY -->
+    <!-- ============================================================ -->
+    <div id="transition-overlay"></div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

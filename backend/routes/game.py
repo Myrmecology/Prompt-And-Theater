@@ -10,7 +10,7 @@ from backend.services.story import (
     generate_next_scene,
     update_player_state
 )
-from backend.services.image import generate_scene_image
+from backend.services.image import generate_scene_image, fetch_image_as_base64
 
 router = APIRouter()
 
@@ -23,9 +23,10 @@ async def start_game(player_name: str = "Stranger"):
         player_state = PlayerState(player_name=player_name)
         scene_data = generate_opening_scene()
 
-        image_url = generate_scene_image(
+        raw_url = generate_scene_image(
             scene_data.get("image_prompt", "dark medieval fantasy landscape")
         )
+        image_url = fetch_image_as_base64(raw_url)
 
         sessions[player_state.session_id] = player_state
 
@@ -64,9 +65,10 @@ async def make_choice(request: SceneRequest):
         scene_data = generate_next_scene(player_state, choice)
         player_state = update_player_state(player_state, choice, scene_data)
 
-        image_url = generate_scene_image(
+        raw_url = generate_scene_image(
             scene_data.get("image_prompt", "dark medieval fantasy landscape")
         )
+        image_url = fetch_image_as_base64(raw_url)
 
         sessions[session_id] = player_state
 

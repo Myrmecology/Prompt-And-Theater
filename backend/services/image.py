@@ -7,9 +7,7 @@ import httpx
 import urllib.parse
 from backend.utils.prompts import build_image_prompt
 
-
 POLLINATIONS_BASE_URL = "https://image.pollinations.ai/prompt/"
-
 IMAGE_WIDTH = 1024
 IMAGE_HEIGHT = 576
 IMAGE_MODEL = "flux"
@@ -35,13 +33,18 @@ def generate_scene_image(image_prompt: str) -> str:
         return _fallback_image_url()
 
 
-def verify_image_url(url: str) -> bool:
+def fetch_image_as_base64(image_url: str) -> str:
     try:
-        with httpx.Client(timeout=10.0) as client:
-            response = client.head(url)
-            return response.status_code == 200
-    except Exception:
-        return False
+        with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+            response = client.get(image_url)
+            if response.status_code == 200:
+                import base64
+                content_type = response.headers.get("content-type", "image/jpeg")
+                image_data = base64.b64encode(response.content).decode("utf-8")
+                return f"data:{content_type};base64,{image_data}"
+    except Exception as e:
+        print(f"Image fetch error: {e}")
+    return ""
 
 
 def _fallback_image_url() -> str:

@@ -27,6 +27,8 @@
     --crimson-floor: #3a0000;
     --text-light: #e8e0d0;
     --text-dim: #a09880;
+    --sidebar-bg: #0e0e0e;
+    --sidebar-border: rgba(139, 0, 0, 0.25);
 }
 
 html, body {
@@ -63,7 +65,6 @@ html, body {
     margin-bottom: 60px;
 }
 
-/* TOP LINE — "Prompt And" */
 .title-top {
     font-family: 'Cinzel Decorative', cursive;
     font-size: clamp(2rem, 5vw, 4rem);
@@ -81,7 +82,6 @@ html, body {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
 }
 
-/* BOTTOM LINE — "THEATER" blood letters */
 .title-bottom {
     display: flex;
     align-items: flex-end;
@@ -107,7 +107,6 @@ html, body {
     line-height: 1;
 }
 
-/* Blood drip effect on letters */
 .letter::after {
     content: '';
     position: absolute;
@@ -138,7 +137,6 @@ html, body {
     50% { opacity: 1; transform: translateX(-50%) scaleY(1.1); }
 }
 
-/* BLOOD FLOOR REFLECTION */
 .blood-floor {
     position: absolute;
     bottom: -120px;
@@ -173,7 +171,6 @@ html, body {
     );
 }
 
-/* TITLE REFLECTION — mirror of title bottom */
 .title-container::after {
     content: 'THEATER';
     font-family: 'Cinzel Decorative', cursive;
@@ -192,7 +189,7 @@ html, body {
 }
 
 /* ============================================================ */
-/* TITLE UI — Name Entry & Begin Button                          */
+/* TITLE UI                                                      */
 /* ============================================================ */
 
 .title-ui {
@@ -346,6 +343,71 @@ html, body {
 }
 
 /* ============================================================ */
+/* ACT TRANSITION SCREEN                                         */
+/* ============================================================ */
+
+#act-transition-screen {
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.act-transition-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: act-reveal 0.8s ease forwards;
+}
+
+@keyframes act-reveal {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.act-transition-line {
+    width: 300px;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent,
+        var(--blood-red),
+        transparent
+    );
+}
+
+.act-transition-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.6em;
+    color: var(--stone-gray);
+    text-transform: uppercase;
+}
+
+.act-transition-numeral {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(4rem, 10vw, 7rem);
+    font-weight: 900;
+    color: var(--bright-blood);
+    text-shadow:
+        3px 3px 0px #3a0000,
+        0 0 40px rgba(180,0,0,0.5);
+    line-height: 1;
+}
+
+.act-transition-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+/* ============================================================ */
 /* GAME SCREEN                                                   */
 /* ============================================================ */
 
@@ -362,39 +424,43 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 40px;
+    padding: 14px 30px;
     border-bottom: 1px solid rgba(139, 0, 0, 0.3);
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
     position: sticky;
     top: 0;
     z-index: 100;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .game-logo {
     font-family: 'Cinzel Decorative', cursive;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--blood-red);
     letter-spacing: 0.2em;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .player-stats {
     display: flex;
-    gap: 30px;
+    gap: 20px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .stat {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-family: 'Cinzel', serif;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
 }
 
 .stat-icon {
     color: var(--blood-red);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .stat-label {
@@ -406,19 +472,136 @@ html, body {
 .stat-value {
     color: var(--pale-stone);
     font-weight: 700;
-    min-width: 30px;
+    min-width: 28px;
 }
 
-/* GAME BODY */
+.stat-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(139, 0, 0, 0.3);
+}
+
+/* GAME BODY — two column layout */
 .game-body {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 30px 20px;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* MAIN COLUMN */
+.game-main {
     display: flex;
     flex-direction: column;
     flex: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    width: 100%;
-    padding: 40px 20px;
-    gap: 40px;
+    gap: 30px;
+    min-width: 0;
+}
+
+/* SIDEBAR COLUMN */
+.game-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 280px;
+    flex-shrink: 0;
+}
+
+.sidebar-panel {
+    background: var(--sidebar-bg);
+    border: 1px solid var(--sidebar-border);
+}
+
+.sidebar-panel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--stone-gray);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--sidebar-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-icon {
+    color: var(--blood-red);
+}
+
+.sidebar-panel-body {
+    padding: 14px 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    line-height: 1.8;
+}
+
+.sidebar-empty {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 0.72rem;
+}
+
+.inventory-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(139, 0, 0, 0.1);
+    color: var(--pale-stone);
+    font-size: 0.75rem;
+}
+
+.inventory-item::before {
+    content: '▸';
+    color: var(--blood-red);
+    font-size: 0.6rem;
+}
+
+.decision-log-body {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--blood-red) transparent;
+}
+
+.decision-log-body::-webkit-scrollbar {
+    width: 3px;
+}
+
+.decision-log-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.decision-log-body::-webkit-scrollbar-thumb {
+    background: var(--blood-red);
+    border-radius: 2px;
+}
+
+.decision-entry {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(139, 0, 0, 0.1);
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+
+.decision-number {
+    color: var(--blood-red);
+    font-weight: 700;
+    flex-shrink: 0;
+    min-width: 18px;
+}
+
+.decision-text {
+    color: var(--text-dim);
 }
 
 /* SCENE IMAGE */
@@ -630,4 +813,27 @@ html, body {
 
 .hidden {
     display: none !important;
+}
+
+/* ============================================================ */
+/* RESPONSIVE                                                    */
+/* ============================================================ */
+
+@media (max-width: 900px) {
+    .game-body {
+        flex-direction: column;
+    }
+
+    .game-sidebar {
+        width: 100%;
+        flex-direction: row;
+    }
+
+    .sidebar-panel {
+        flex: 1;
+    }
+
+    .decision-log-body {
+        max-height: 200px;
+    }
 }

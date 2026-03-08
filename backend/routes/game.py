@@ -3,18 +3,38 @@
 # FastAPI endpoints for all game logic
 # ============================================================
 
+import httpx
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from backend.models.session import PlayerState, SceneRequest, SceneResponse
 from backend.services.story import (
     generate_opening_scene,
     generate_next_scene,
     update_player_state
 )
-from backend.services.image import generate_scene_image, fetch_image_as_base64
+from backend.services.image import generate_scene_image
+import urllib.parse
 
 router = APIRouter()
 
 sessions: dict[str, PlayerState] = {}
+
+
+@router.get("/image")
+async def proxy_image(url: str):
+    try:
+        decoded_url = urllib.parse.unquote(url)
+        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+            response = await client.get(decoded_url)
+            if response.status_code == 200:
+                content_type = response.headers.get("content-type", "image/jpeg")
+                return StreamingResponse(
+                    iter([response.content]),
+                    media_type=content_type
+                )
+    except Exception as e:
+        raise HTTPException(status_code=504, detail=f"Image fetch failed: {str(e)}")
+    raise HTTPException(status_code=404, detail="Image not available")
 
 
 @router.post("/start", response_model=SceneResponse)
@@ -26,7 +46,8 @@ async def start_game(player_name: str = "Stranger"):
         raw_url = generate_scene_image(
             scene_data.get("image_prompt", "dark medieval fantasy landscape")
         )
-        image_url = fetch_image_as_base64(raw_url)
+        encoded_url = urllib.parse.quote(raw_url, safe='')
+        image_url = f"/api/game/image?url={encoded_url}"
 
         sessions[player_state.session_id] = player_state
 
@@ -68,7 +89,8 @@ async def make_choice(request: SceneRequest):
         raw_url = generate_scene_image(
             scene_data.get("image_prompt", "dark medieval fantasy landscape")
         )
-        image_url = fetch_image_as_base64(raw_url)
+        encoded_url = urllib.parse.quote(raw_url, safe='')
+        image_url = f"/api/game/image?url={encoded_url}"
 
         sessions[session_id] = player_state
 

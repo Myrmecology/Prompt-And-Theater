@@ -52,6 +52,19 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- ACT TRANSITION SCREEN -->
+    <!-- ============================================================ -->
+    <div id="act-transition-screen" class="hidden">
+        <div class="act-transition-content">
+            <div class="act-transition-line"></div>
+            <div class="act-transition-label">ACT</div>
+            <div class="act-transition-numeral" id="act-transition-numeral">II</div>
+            <div class="act-transition-subtitle" id="act-transition-subtitle">A new chapter unfolds in Valdermoor</div>
+            <div class="act-transition-line"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
     <!-- GAME SCREEN -->
     <!-- ============================================================ -->
     <div id="game-screen" class="hidden">
@@ -59,6 +72,11 @@
         <div class="game-header">
             <div class="game-logo">Prompt And Theater</div>
             <div class="player-stats">
+                <div class="stat" id="stat-name">
+                    <span class="stat-icon">⚔</span>
+                    <span class="stat-value" id="name-value">Stranger</span>
+                </div>
+                <div class="stat-divider"></div>
                 <div class="stat" id="stat-health">
                     <span class="stat-icon">♥</span>
                     <span class="stat-label">Health</span>
@@ -79,25 +97,59 @@
                     <span class="stat-label">Act</span>
                     <span class="stat-value" id="act-value">I</span>
                 </div>
+                <div class="stat" id="stat-scene">
+                    <span class="stat-icon">🗡</span>
+                    <span class="stat-label">Scene</span>
+                    <span class="stat-value" id="scene-value">0</span>
+                </div>
             </div>
         </div>
 
         <div class="game-body">
-            <div class="scene-image-container">
-                <div class="scene-image-frame">
-                    <img id="scene-image" src="" alt="Scene" />
-                    <div class="image-overlay"></div>
-                </div>
-                <div class="location-badge" id="location-badge">Valdermoor</div>
-            </div>
 
-            <div class="scene-content">
-                <div class="narrative-container">
-                    <div class="narrative-text" id="narrative-text"></div>
+            <!-- LEFT COLUMN — Scene Image + Narrative + Choices -->
+            <div class="game-main">
+                <div class="scene-image-container">
+                    <div class="scene-image-frame">
+                        <img id="scene-image" src="" alt="Scene" />
+                        <div class="image-overlay"></div>
+                    </div>
+                    <div class="location-badge" id="location-badge">Valdermoor</div>
                 </div>
 
-                <div class="choices-container" id="choices-container"></div>
+                <div class="scene-content">
+                    <div class="narrative-container">
+                        <div class="narrative-text" id="narrative-text"></div>
+                    </div>
+                    <div class="choices-container" id="choices-container"></div>
+                </div>
             </div>
+
+            <!-- RIGHT COLUMN — Inventory + Decision Log -->
+            <div class="game-sidebar">
+
+                <!-- INVENTORY -->
+                <div class="sidebar-panel">
+                    <div class="sidebar-panel-title">
+                        <span class="sidebar-icon">⚗</span> Inventory
+                    </div>
+                    <div class="sidebar-panel-body" id="inventory-list">
+                        <span class="sidebar-empty">Nothing carried</span>
+                    </div>
+                </div>
+
+                <!-- DECISION LOG -->
+                <div class="sidebar-panel">
+                    <div class="sidebar-panel-title">
+                        <span class="sidebar-icon">📖</span> Decision Log
+                    </div>
+                    <div class="sidebar-panel-body decision-log-body" id="decision-log">
+                        <span class="sidebar-empty">No decisions made yet</span>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
 
     </div>

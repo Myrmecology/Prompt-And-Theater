@@ -5,7 +5,9 @@
 const State = {
     sessionId: null,
     playerState: null,
-    isLoading: false
+    isLoading: false,
+    currentAct: 1,
+    decisionCount: 0
 }
 
 // ============================================================
@@ -13,7 +15,13 @@ const State = {
 // ============================================================
 
 function showScreen(screenId) {
-    const screens = ['title-screen', 'loading-screen', 'game-screen', 'gameover-screen']
+    const screens = [
+        'title-screen',
+        'loading-screen',
+        'game-screen',
+        'gameover-screen',
+        'act-transition-screen'
+    ]
     screens.forEach(id => {
         const el = document.getElementById(id)
         if (el) el.classList.add('hidden')
@@ -49,6 +57,43 @@ async function transition(callback) {
 }
 
 // ============================================================
+// ACT TRANSITION
+// ============================================================
+
+const ACT_SUBTITLES = [
+    'A new chapter unfolds in Valdermoor',
+    'The darkness deepens across the realm',
+    'Blood and shadow consume the land',
+    'The final reckoning draws near',
+    'Fate cannot be outrun',
+    'The world bends to your choices',
+    'Legends are forged in suffering',
+    'The end begins here',
+    'Nothing remains but the truth',
+    'Valdermoor remembers everything'
+]
+
+const ACT_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+
+async function showActTransition(actNumber) {
+    const numeral = ACT_NUMERALS[(actNumber - 1)] || String(actNumber)
+    const subtitle = ACT_SUBTITLES[(actNumber - 2)] || 'A new chapter unfolds in Valdermoor'
+
+    document.getElementById('act-transition-numeral').textContent = numeral
+    document.getElementById('act-transition-subtitle').textContent = subtitle
+
+    await fadeOut()
+    showScreen('act-transition-screen')
+    await fadeIn()
+
+    await new Promise(resolve => setTimeout(resolve, 2800))
+
+    await fadeOut()
+    showScreen('loading-screen')
+    await fadeIn()
+}
+
+// ============================================================
 // NARRATIVE TYPEWRITER EFFECT
 // ============================================================
 
@@ -76,10 +121,14 @@ function updateStatsHUD(playerState) {
     document.getElementById('health-value').textContent = playerState.health
     document.getElementById('gold-value').textContent = playerState.gold
     document.getElementById('reputation-value').textContent = playerState.reputation
+    document.getElementById('scene-value').textContent = playerState.scene
 
-    const actNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
     const actIndex = (playerState.act || 1) - 1
-    document.getElementById('act-value').textContent = actNumerals[actIndex] || playerState.act
+    document.getElementById('act-value').textContent = ACT_NUMERALS[actIndex] || playerState.act
+
+    if (playerState.player_name) {
+        document.getElementById('name-value').textContent = playerState.player_name
+    }
 
     const healthEl = document.getElementById('stat-health')
     if (playerState.health <= 30) {
@@ -89,6 +138,48 @@ function updateStatsHUD(playerState) {
     } else {
         healthEl.style.color = ''
     }
+}
+
+// ============================================================
+// UPDATE INVENTORY
+// ============================================================
+
+function updateInventory(playerState) {
+    const inventoryEl = document.getElementById('inventory-list')
+    if (!inventoryEl) return
+
+    if (!playerState.inventory || playerState.inventory.length === 0) {
+        inventoryEl.innerHTML = '<span class="sidebar-empty">Nothing carried</span>'
+        return
+    }
+
+    inventoryEl.innerHTML = playerState.inventory.map(item => `
+        <div class="inventory-item">${item}</div>
+    `).join('')
+}
+
+// ============================================================
+// UPDATE DECISION LOG
+// ============================================================
+
+function updateDecisionLog(choice) {
+    const logEl = document.getElementById('decision-log')
+    if (!logEl) return
+
+    const emptyEl = logEl.querySelector('.sidebar-empty')
+    if (emptyEl) emptyEl.remove()
+
+    State.decisionCount++
+
+    const entry = document.createElement('div')
+    entry.className = 'decision-entry'
+    entry.innerHTML = `
+        <span class="decision-number">${State.decisionCount}.</span>
+        <span class="decision-text">${choice.replace(/^\d+\.\s*/, '')}</span>
+    `
+
+    logEl.appendChild(entry)
+    logEl.scrollTop = logEl.scrollHeight
 }
 
 // ============================================================
@@ -103,17 +194,15 @@ async function renderScene(data) {
     const sceneImage = document.getElementById('scene-image')
     const locationBadge = document.getElementById('location-badge')
 
-    // Update location
     if (data.player_state && data.player_state.current_location) {
         locationBadge.textContent = data.player_state.current_location
     }
 
-    // Update stats
     if (data.player_state) {
         updateStatsHUD(data.player_state)
+        updateInventory(data.player_state)
     }
 
-    // Load image
     sceneImage.style.opacity = '0'
     sceneImage.src = data.image_url
     sceneImage.onload = () => {
@@ -123,13 +212,10 @@ async function renderScene(data) {
         sceneImage.style.opacity = '0.3'
     }
 
-    // Clear choices while typing
     choicesEl.innerHTML = ''
 
-    // Typewriter narrative
     await typeWriter(narrativeEl, data.narrative)
 
-    // Render choices
     choicesEl.innerHTML = ''
     if (data.choices && data.choices.length > 0) {
         data.choices.forEach(choice => {
@@ -155,6 +241,15 @@ async function startGame() {
 
     const nameInput = document.getElementById('player-name')
     const playerName = nameInput.value.trim() || 'Stranger'
+
+    State.currentAct = 1
+    State.decisionCount = 0
+
+    const logEl = document.getElementById('decision-log')
+    if (logEl) logEl.innerHTML = '<span class="sidebar-empty">No decisions made yet</span>'
+
+    const inventoryEl = document.getElementById('inventory-list')
+    if (inventoryEl) inventoryEl.innerHTML = '<span class="sidebar-empty">Nothing carried</span>'
 
     await transition(async () => {
         showScreen('loading-screen')
@@ -193,12 +288,15 @@ async function handleChoice(choice) {
     if (State.isLoading || !State.sessionId) return
     State.isLoading = true
 
-    // Disable all choice buttons
+    updateDecisionLog(choice)
+
     const buttons = document.querySelectorAll('.choice-btn')
     buttons.forEach(btn => {
         btn.disabled = true
         btn.style.opacity = '0.4'
     })
+
+    const previousAct = State.playerState ? State.playerState.act : 1
 
     await transition(async () => {
         showScreen('loading-screen')
@@ -218,9 +316,18 @@ async function handleChoice(choice) {
 
         const data = await response.json()
 
+        const newAct = data.player_state ? data.player_state.act : 1
+        const actAdvanced = newAct > previousAct
+
         if (data.is_game_over) {
             await transition(async () => {
                 showGameOver(data)
+            })
+        } else if (actAdvanced) {
+            State.currentAct = newAct
+            await showActTransition(newAct)
+            await transition(async () => {
+                await renderScene(data)
             })
         } else {
             await transition(async () => {
@@ -260,6 +367,7 @@ function showGameOver(data) {
         statsEl.innerHTML = `
             <p>Scenes Survived: ${p.scene} &nbsp;|&nbsp; Acts Reached: ${p.act}</p>
             <p style="margin-top:8px">Gold Carried: ${p.gold} &nbsp;|&nbsp; Final Reputation: ${p.reputation}</p>
+            <p style="margin-top:8px">Decisions Made: ${State.decisionCount}</p>
         `
     }
 }
@@ -279,6 +387,8 @@ async function restartGame() {
 
     State.sessionId = null
     State.playerState = null
+    State.currentAct = 1
+    State.decisionCount = 0
 
     await transition(async () => {
         showScreen('title-screen')

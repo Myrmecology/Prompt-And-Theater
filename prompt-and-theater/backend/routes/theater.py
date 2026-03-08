@@ -10,14 +10,24 @@ intent_engine = IntentEngine()
 
 
 # --------------------------------------------------------
-# Page Route
+# Page Routes
 # --------------------------------------------------------
 
 @theater_bp.route("/")
 def theater_page():
     """
-    Renders the theater page.
-    This is where the animation plays.
+    Renders the theater page without a ticket.
+    Plays the demo sequence.
+    """
+    return render_template("theater.html")
+
+
+@theater_bp.route("/watch/<ticket_id>")
+def watch_ticket(ticket_id):
+    """
+    Renders the theater page for a specific saved ticket.
+    The ticket ID is in the URL so the frontend JS can
+    grab it and fetch the animation sequence.
     """
     return render_template("theater.html")
 
